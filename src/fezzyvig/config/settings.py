@@ -1,0 +1,28 @@
+"""Загрузка типизированных настроек приложения из переменных окружения."""
+
+from functools import lru_cache
+
+from pydantic import Field, SecretStr
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class Settings(BaseSettings):
+    """Настройки времени выполнения, загружаемые из переменных окружения."""
+
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+
+    database_url: str = "postgresql+psycopg://fezzyvig:fezzyvig@localhost:5432/fezzyvig"
+    log_level: str = "INFO"
+    http_timeout: float = Field(default=10.0, gt=0)
+    hh_user_agent: str = "Fezzyvig/0.1"
+    hh_client_id: str | None = None
+    hh_client_secret: SecretStr | None = None
+    hh_redirect_uri: str | None = None
+    session_cookie_secure: bool = False
+    session_lifetime_days: int = Field(default=30, ge=1, le=365)
+
+
+@lru_cache
+def get_settings() -> Settings:
+    """Вернуть общий для процесса экземпляр проверенных настроек."""
+    return Settings()

@@ -1,0 +1,1 @@
+"""Fezzyvig application package."""
