@@ -64,3 +64,14 @@ ruff check src tests
 mypy src
 cd frontend && npm run typecheck
 ```
+
+## CI/CD
+
+Pull request в `dev` запускает тесты, линтер и проверку типов Python, а также
+сборку frontend. После слияния в `dev` те же проверки выполняются повторно и,
+если они прошли, Docker-образ публикуется в GitHub Container Registry с тегами
+`dev` и `sha-<commit SHA>` по адресу `ghcr.io/audrus1917/fezzyvig`.
+
+Публикация использует встроенный `GITHUB_TOKEN` с правом `packages: write`;
+дополнительные секреты не требуются. Развёртывание на сервер пока не настроено:
+для него нужны адрес сервера и способ доступа.
