@@ -1,4 +1,4 @@
-"""Application users and authenticated sessions."""
+"""Пользователи приложения и аутентифицированные сессии."""
 
 from datetime import UTC, datetime
 
@@ -7,7 +7,7 @@ from sqlmodel import Field, SQLModel
 
 
 class User(SQLModel, table=True):
-    """A user allowed to access the employer workspace."""
+    """Пользователь, имеющий доступ к кабинету работодателя."""
 
     __tablename__ = "app_user"
 
@@ -21,7 +21,7 @@ class User(SQLModel, table=True):
 
 
 class UserSession(SQLModel, table=True):
-    """A revocable server-side browser session."""
+    """Браузерная сессия, которую можно завершить на сервере."""
 
     __tablename__ = "user_session"
 

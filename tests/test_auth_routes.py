@@ -1,4 +1,4 @@
-"""Test authentication API and protected employer routes."""
+"""Тесты API аутентификации и защищённых маршрутов работодателя."""
 
 from collections.abc import Generator
 
@@ -11,7 +11,7 @@ from fezzyvig.main import app
 
 
 def test_authentication_flow() -> None:
-    """A browser session grants and revokes access to employer data."""
+    """Браузерная сессия открывает и прекращает доступ к данным работодателя."""
     engine = create_engine(
         "sqlite://",
         connect_args={"check_same_thread": False},

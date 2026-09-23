@@ -1,1 +1,1 @@
-"""Fezzyvig application package."""
+"""Пакет приложения Fezzyvig."""

@@ -1,4 +1,4 @@
-"""Test HeadHunter employer synchronization."""
+"""Тесты синхронизации данных работодателя HeadHunter."""
 
 import asyncio
 from datetime import UTC, datetime, timedelta
@@ -14,7 +14,7 @@ from fezzyvig.services.employer import EmployerService
 
 
 def test_sync_vacancies_upserts() -> None:
-    """Repeated synchronization updates the existing source vacancy."""
+    """Повторная синхронизация обновляет существующую вакансию."""
     payloads = iter(
         [
             {
@@ -70,7 +70,7 @@ def test_sync_vacancies_upserts() -> None:
 
 
 def test_pkce_values_are_unique() -> None:
-    """Each OAuth attempt receives independent state and verifier values."""
+    """Каждая попытка OAuth получает уникальные состояние и верификатор."""
     first = EmployerService.create_pkce()
     second = EmployerService.create_pkce()
 
@@ -80,7 +80,7 @@ def test_pkce_values_are_unique() -> None:
 
 
 def test_exchange_persists_tokens() -> None:
-    """The authorization exchange persists the complete token pair."""
+    """Обмен кода авторизации сохраняет пару токенов."""
 
     def handler(request: httpx.Request) -> httpx.Response:
         assert request.url.path == "/token"
@@ -133,7 +133,7 @@ def test_exchange_persists_tokens() -> None:
 
 
 def test_sync_refreshes_token() -> None:
-    """Synchronization rotates an expired token before the HH request."""
+    """Синхронизация обновляет просроченный токен до запроса к HeadHunter."""
     requests: list[str] = []
 
     def handler(request: httpx.Request) -> httpx.Response:
@@ -193,7 +193,7 @@ def test_sync_refreshes_token() -> None:
 
 
 def test_sync_retries_expired_token() -> None:
-    """Synchronization refreshes a token rejected as expired by HH."""
+    """Синхронизация обновляет токен, отклонённый HeadHunter как просроченный."""
     vacancy_requests = 0
 
     def handler(request: httpx.Request) -> httpx.Response:

@@ -21,7 +21,7 @@ class EmployerService:
     """Синхронизация вакансий работодателя без записи данных в HeadHunter."""
 
     def __init__(self, session: Session, client: httpx.AsyncClient, user_id: int) -> None:
-        """Initialize the service for a specific authenticated user."""
+        """Инициализировать сервис для конкретного пользователя."""
         self._session = session
         self._client = client
         self.user_id = user_id

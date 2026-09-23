@@ -1,4 +1,4 @@
-"""Create and configure the Fezzyvig FastAPI application."""
+"""Создание и настройка FastAPI-приложения Fezzyvig."""
 
 import logging
 import sys
