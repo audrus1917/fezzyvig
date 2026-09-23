@@ -44,7 +44,11 @@ class AuthService:
         """Вернуть пользователя при корректных учётных данных."""
         normalized_email = self._normalize_email(email)
         user = self._session.exec(select(User).where(User.email == normalized_email)).first()
-        if user is None or not self._verify_password(password, user.password_hash):
+        if (
+            user is None
+            or not user.is_active
+            or not self._verify_password(password, user.password_hash)
+        ):
             raise AuthError("Invalid email or password")
         return user
 
@@ -74,7 +78,12 @@ class AuthService:
             self._session.delete(user_session)
             self._session.commit()
             return None
-        return self._session.get(User, user_session.user_id)
+        user = self._session.get(User, user_session.user_id)
+        if user is None or not user.is_active:
+            self._session.delete(user_session)
+            self._session.commit()
+            return None
+        return user
 
     def delete_session(self, token: str | None) -> None:
         """Завершить сессию, если её токен существует."""

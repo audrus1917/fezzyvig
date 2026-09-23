@@ -75,6 +75,12 @@ def dashboard() -> FileResponse:
     return FileResponse(static_directory / "index.html")
 
 
+@app.get("/login", include_in_schema=False)
+def login_page() -> FileResponse:
+    """Вернуть отдельную страницу входа."""
+    return FileResponse(static_directory / "index.html")
+
+
 @app.get("/health", tags=["system"])
 def health() -> dict[str, str]:
     """Вернуть базовый индикатор работоспособности приложения."""

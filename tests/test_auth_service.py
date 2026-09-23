@@ -1,5 +1,6 @@
 """Тесты аутентификации пользователей и серверных сессий."""
 
+from collections.abc import Iterator
 from datetime import timedelta
 
 import pytest
@@ -10,7 +11,7 @@ from fezzyvig.services.auth import AuthError, AuthService
 
 
 @pytest.fixture
-def auth_service() -> AuthService:
+def auth_service() -> Iterator[AuthService]:
     """Создать сервис аутентификации при базе данных в памяти."""
     engine = create_engine(
         "sqlite://",
@@ -46,3 +47,18 @@ def test_duplicate_email(auth_service: AuthService) -> None:
 
     with pytest.raises(AuthError, match="already exists"):
         auth_service.register("USER@example.com", "another-pass")
+
+
+def test_inactive_user(auth_service: AuthService) -> None:
+    user = auth_service.register("user@example.com", "secret-pass")
+    token = auth_service.create_session(user)
+    user.is_active = False
+    auth_service._session.commit()
+
+    with pytest.raises(AuthError, match="Invalid email or password"):
+        auth_service.authenticate("user@example.com", "secret-pass")
+    assert auth_service.get_user(token) is None
+
+    user.is_active = True
+    auth_service._session.commit()
+    assert auth_service.get_user(token) is None

@@ -1,5 +1,7 @@
 """Эндпоинты OAuth работодателя и синхронизации вакансий HeadHunter."""
 
+import logging
+
 from datetime import UTC, datetime
 from typing import Annotated
 from urllib.parse import quote
@@ -13,6 +15,7 @@ from fezzyvig.config.settings import Settings, get_settings
 from fezzyvig.i18n import translate
 from fezzyvig.services.employer import EmployerService, EmployerSyncError
 
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/employer", tags=["employer"])
 callback_router = APIRouter(tags=["employer"])
 
