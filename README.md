@@ -65,6 +65,14 @@ mypy src
 cd frontend && npm run typecheck
 ```
 
+Сообщения ошибок API переводятся на русский при заголовке `Accept-Language: ru`.
+Без него API возвращает исходные английские сообщения. После изменения каталога
+`src/fezzyvig/locale/ru/LC_MESSAGES/fezzyvig.po` обновите бинарный каталог:
+
+```bash
+msgfmt src/fezzyvig/locale/ru/LC_MESSAGES/fezzyvig.po -o src/fezzyvig/locale/ru/LC_MESSAGES/fezzyvig.mo
+```
+
 ## CI/CD
 
 Pull request в `dev` запускает тесты, линтер и проверку типов Python, а также

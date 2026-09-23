@@ -10,6 +10,7 @@ from fastapi.responses import RedirectResponse
 from fezzyvig.api.dependencies import CurrentUserDependency, EmployerServiceDependency
 from fezzyvig.api.schemas import EmployerSyncResponse, EmployerVacancyResponse
 from fezzyvig.config.settings import Settings, get_settings
+from fezzyvig.i18n import translate
 from fezzyvig.services.employer import EmployerService, EmployerSyncError
 
 router = APIRouter(prefix="/employer", tags=["employer"])
@@ -75,7 +76,7 @@ async def employer_callback(
         )
     except EmployerSyncError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
-    return {"status": "connected", "message": "HH employer account connected"}
+    return {"status": "connected", "message": translate(request, "HH employer account connected")}
 
 
 @router.get("/vacancies", response_model=list[EmployerVacancyResponse])

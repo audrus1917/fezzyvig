@@ -26,7 +26,12 @@ def test_authentication_flow() -> None:
     app.dependency_overrides[get_session] = session_override
     try:
         with TestClient(app, base_url="https://testserver") as client:
-            assert client.get("/employer/vacancies").status_code == 401
+            english_error = client.get("/employer/vacancies")
+            assert english_error.status_code == 401
+            assert english_error.json()["detail"] == "Authentication required"
+            russian_error = client.get("/auth/me", headers={"Accept-Language": "ru-RU, en;q=0.8"})
+            assert russian_error.status_code == 401
+            assert russian_error.json()["detail"] == "Требуется авторизация"
 
             registered = client.post(
                 "/auth/register",
@@ -34,6 +39,13 @@ def test_authentication_flow() -> None:
             )
             assert registered.status_code == 201
             assert registered.json()["email"] == "user@example.com"
+            invalid_login = client.post(
+                "/auth/login",
+                json={"email": "user@example.com", "password": "wrong-password"},
+                headers={"Accept-Language": "ru"},
+            )
+            assert invalid_login.status_code == 401
+            assert invalid_login.json()["detail"] == "Неверный адрес электронной почты или пароль"
             assert client.get("/auth/me").status_code == 200
             assert client.get("/employer/vacancies").json() == []
 
