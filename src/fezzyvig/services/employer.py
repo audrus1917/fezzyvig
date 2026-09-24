@@ -10,9 +10,11 @@ from typing import cast
 import httpx
 from sqlmodel import Session, col, select
 
+from fezzyvig.config.settings import get_settings
 from fezzyvig.models.oauth_token import EmployerOAuthToken
 from fezzyvig.models.vacancy import EmployerVacancy
 
+settings = get_settings()
 logger = logging.getLogger(__name__)
 
 
@@ -68,18 +70,23 @@ class EmployerService:
         self._store_tokens(*tokens)
         return tokens[0]
 
-    async def sync_vacancies(self) -> int:
-        """Синхронизировать вакансии работодателя в локальном хранилище."""
+    async def sync_vacancies(self, vacancies_url: str | None = None) -> int:
+        """Синхронизировать вакансии работодателя в локальном хранилище.
+        
+        
+        """
         try:
-            # FIXME: удалить всю отладку
-            logger.debug("Step 1")
             access_token = await self._get_access_token()
-            logger.debug("Step 2: %s", access_token)
+
+            # Формируем ссылку или используем перданную в параметрах
+            employer_id = settings.hh_employer_id
+            vacancies_url = vacancies_url or f"/employers/{employer_id}/vacancies/active"
 
             response = await self._client.get(
-                "/employer/vacancies",
+                vacancies_url,
                 headers=self._authorization_headers(access_token),
             )
+
             logger.debug(response)
             if self._is_token_expired(response):
                 access_token = await self._refresh_access_token(access_token)

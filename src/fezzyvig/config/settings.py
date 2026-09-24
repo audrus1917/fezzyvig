@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     hh_client_id: str | None = None
     hh_client_secret: SecretStr | None = None
     hh_redirect_uri: str | None = None
+    hh_employer_id: str | None = None
     session_cookie_secure: bool = False
     session_lifetime_days: int = Field(default=30, ge=1, le=365)
     tz_name: str = "Europe/Minsk"
