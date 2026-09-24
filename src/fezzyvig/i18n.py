@@ -10,7 +10,7 @@ LOCALE_DIR = Path(__file__).parent / "locale"
 
 def translate(request: Request, message: str) -> str:
     """Вернуть перевод сообщения для предпочтительного языка запроса."""
-    
+
     preferences: list[tuple[float, int, str]] = []
     for order, item in enumerate(request.headers.get("accept-language", "").split(",")):
         language, _, parameters = item.strip().partition(";")

@@ -15,6 +15,8 @@ class User(ChangedAtMixin, table=True):
 
     id: int | None = Field(default=None, primary_key=True)
     email: str = Field(max_length=320, unique=True, index=True)
+    first_name: str | None = Field(default=None, max_length=100)
+    last_name: str | None = Field(default=None, max_length=100)
     password_hash: str = Field(sa_column=Column(Text, nullable=False), repr=False)
     is_active: bool = Field(default=True, nullable=False)
     is_superuser: bool = Field(default=False, nullable=False)

@@ -26,7 +26,10 @@ def user_database(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def test_add_user_with_argument(user_database: None, capsys: pytest.CaptureFixture[str]) -> None:
-    assert cli.main(["USER@example.com", "--password", "secret-pass"]) == 0
+    assert cli.main([
+        "USER@example.com", "--password", "secret-pass",
+        "--first-name", "Anna", "--last-name", "Ivanova",
+    ]) == 0
 
     with Session(database.engine) as session:
         user = AuthService(session, timedelta(days=30)).authenticate(
@@ -34,6 +37,8 @@ def test_add_user_with_argument(user_database: None, capsys: pytest.CaptureFixtu
         )
 
     assert user.email == "user@example.com"
+    assert user.first_name == "Anna"
+    assert user.last_name == "Ivanova"
     assert "secret-pass" not in capsys.readouterr().out
 
 

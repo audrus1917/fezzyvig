@@ -26,11 +26,20 @@ class AuthService:
         self._session = session
         self._session_lifetime = session_lifetime
 
-    def register(self, email: str, password: str) -> User:
-        """Создать пользователя, нормализовав адрес и хешировав пароль."""
+    def register(
+        self, email: str, password: str, first_name: str | None = None, last_name: str | None = None
+    ) -> User:
+        """Создать пользователя, нормализовать данные и хешировать пароль."""
         normalized_email = self._normalize_email(email)
         self._validate_password(password)
-        user = User(email=normalized_email, password_hash=self._hash_password(password))
+        first_name = self._normalize_name(first_name) if first_name is not None else None
+        last_name = self._normalize_name(last_name) if last_name is not None else None
+        user = User(
+            email=normalized_email,
+            first_name=first_name,
+            last_name=last_name,
+            password_hash=self._hash_password(password),
+        )
         self._session.add(user)
         try:
             self._session.commit()
@@ -107,6 +116,14 @@ class AuthService:
             raise AuthError("Password must contain at least 8 characters")
         if len(password) > 256:
             raise AuthError("Password is too long")
+
+    @staticmethod
+    def _normalize_name(name: str) -> str:
+        """Убрать пробелы по краям и проверить длину имени."""
+        normalized = name.strip()
+        if not normalized or len(normalized) > 100:
+            raise AuthError("Enter a name between 1 and 100 characters")
+        return normalized
 
     @staticmethod
     def _hash_password(password: str) -> str:

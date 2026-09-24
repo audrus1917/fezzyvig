@@ -24,6 +24,9 @@ msgstr "Пароль должен содержать не менее 8 симв�
 msgid "Password is too long"
 msgstr "Пароль слишком длинный"
 
+msgid "Enter a name between 1 and 100 characters"
+msgstr "Введите имя длиной от 1 до 100 символов"
+
 msgid "Authentication required"
 msgstr "Требуется авторизация"
 

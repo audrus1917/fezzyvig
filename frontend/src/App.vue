@@ -78,7 +78,7 @@ onUnmounted(() => {
         @click="menuOpen = true"
       ><span></span><span></span><span></span></button>
       <a class="brand" href="/" :aria-label="branding.productName">{{ branding.productName }}</a>
-      <span class="account-email">{{ user.email }}</span>
+      <span class="account-email">{{ [user.first_name, user.last_name].filter(Boolean).join(" ") || user.email }}</span>
     </header>
 
     <button v-if="menuOpen" class="menu-backdrop" type="button" :aria-label="branding.closeMenu" @click="closeMenu"></button>
@@ -90,7 +90,7 @@ onUnmounted(() => {
       <a href="#vacancies" @click="closeMenu">{{ branding.vacanciesTitle }}</a>
       <a href="#connection" @click="closeMenu">{{ branding.connectionTitle }}</a>
       <div class="menu-footer">
-        <span>{{ user.email }}</span>
+        <span>{{ [user.first_name, user.last_name].filter(Boolean).join(" ") || user.email }}</span>
         <button type="button" @click="logout">{{ branding.logout }}</button>
       </div>
     </nav>

@@ -23,7 +23,7 @@ docker compose up --build
 Создайте пользователя командой (пароль будет запрошен без отображения):
 
 ```bash
-docker compose exec api fezzyvig-add-user user@example.com
+docker compose exec api fezzyvig-add-user user@example.com --first-name Иван --last-name Иванов
 ```
 
 Пара OAuth-токенов хранится в базе данных и автоматически обновляется после истечения
@@ -51,11 +51,12 @@ Alembic применяет только ещё не установленные �
 команду `alembic upgrade head` следует выполнить перед запуском.
 
 Форма регистрации пока скрыта. Локально пользователя можно создать командой
-`fezzyvig-add-user user@example.com`. Пароль также можно передать аргументом
+`fezzyvig-add-user user@example.com --first-name Иван --last-name Иванов`.
+Пароль также можно передать аргументом
 `--password` или через стандартный ввод:
 
 ```bash
-printf '%s\n' "$NEW_USER_PASSWORD" | fezzyvig-add-user user@example.com
+printf '%s\n' "$NEW_USER_PASSWORD" | fezzyvig-add-user user@example.com --first-name Иван --last-name Иванов
 ```
 
 Гость перенаправляется на `/login`. После входа

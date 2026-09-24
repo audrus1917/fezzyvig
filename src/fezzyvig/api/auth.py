@@ -3,7 +3,7 @@
 from fastapi import APIRouter, HTTPException, Request, Response, status
 
 from fezzyvig.api.dependencies import SESSION_COOKIE, AuthServiceDependency, CurrentUserDependency
-from fezzyvig.api.schemas import AuthCredentials, UserResponse
+from fezzyvig.api.schemas import AuthCredentials, RegistrationCredentials, UserResponse
 from fezzyvig.config.settings import get_settings
 from fezzyvig.models.user import User
 from fezzyvig.services.auth import AuthError
@@ -14,7 +14,13 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 def _user_response(user: User) -> UserResponse:
     if user.id is None:
         raise RuntimeError("Authenticated user has no id")
-    return UserResponse(id=user.id, email=user.email, created_at=user.created_at)
+    return UserResponse(
+        id=user.id,
+        email=user.email,
+        first_name=user.first_name,
+        last_name=user.last_name,
+        created_at=user.created_at,
+    )
 
 
 def _set_session_cookie(response: Response, token: str) -> None:
@@ -32,11 +38,13 @@ def _set_session_cookie(response: Response, token: str) -> None:
 
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 def register(
-    credentials: AuthCredentials, response: Response, service: AuthServiceDependency
+    credentials: RegistrationCredentials, response: Response, service: AuthServiceDependency
 ) -> UserResponse:
     """Зарегистрировать пользователя и создать браузерную сессию."""
     try:
-        user = service.register(credentials.email, credentials.password)
+        user = service.register(
+            credentials.email, credentials.password, credentials.first_name, credentials.last_name
+        )
         token = service.create_session(user)
     except AuthError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc

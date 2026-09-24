@@ -25,10 +25,12 @@ def auth_service() -> Iterator[AuthService]:
 
 def test_register_and_session(auth_service: AuthService) -> None:
     """Регистрация хеширует пароль и создаёт доступную для проверки сессию."""
-    user = auth_service.register(" User@Example.com ", "secret-pass")
+    user = auth_service.register(" User@Example.com ", "secret-pass", " Anna ", " Ivanova ")
     token = auth_service.create_session(user)
 
     assert user.email == "user@example.com"
+    assert user.first_name == "Anna"
+    assert user.last_name == "Ivanova"
     assert user.password_hash != "secret-pass"
     assert auth_service.get_user(token) == user
 
@@ -62,3 +64,9 @@ def test_inactive_user(auth_service: AuthService) -> None:
     user.is_active = True
     auth_service._session.commit()
     assert auth_service.get_user(token) is None
+
+
+def test_invalid_name(auth_service: AuthService) -> None:
+    """Отклонить имя из одних пробелов."""
+    with pytest.raises(AuthError, match="Enter a name"):
+        auth_service.register("user@example.com", "secret-pass", "   ", "Ivanova")

@@ -32,13 +32,24 @@ def test_authentication_flow() -> None:
             russian_error = client.get("/auth/me", headers={"Accept-Language": "ru-RU, en;q=0.8"})
             assert russian_error.status_code == 401
             assert russian_error.json()["detail"] == "Требуется авторизация"
+            assert client.post(
+                "/auth/register",
+                json={"email": "user@example.com", "password": "secret-pass"},
+            ).status_code == 422
 
             registered = client.post(
                 "/auth/register",
-                json={"email": "user@example.com", "password": "secret-pass"},
+                json={
+                    "email": "user@example.com",
+                    "password": "secret-pass",
+                    "first_name": "Anna",
+                    "last_name": "Ivanova",
+                },
             )
             assert registered.status_code == 201
             assert registered.json()["email"] == "user@example.com"
+            assert registered.json()["first_name"] == "Anna"
+            assert registered.json()["last_name"] == "Ivanova"
             invalid_login = client.post(
                 "/auth/login",
                 json={"email": "user@example.com", "password": "wrong-password"},
@@ -46,10 +57,15 @@ def test_authentication_flow() -> None:
             )
             assert invalid_login.status_code == 401
             assert invalid_login.json()["detail"] == "Неверный адрес электронной почты или пароль"
-            assert client.get("/auth/me").status_code == 200
+            assert client.get("/auth/me").json()["first_name"] == "Anna"
             assert client.get("/employer/vacancies").json() == []
 
             assert client.post("/auth/logout").status_code == 204
             assert client.get("/auth/me").status_code == 401
+            logged_in = client.post(
+                "/auth/login", json={"email": "user@example.com", "password": "secret-pass"}
+            )
+            assert logged_in.status_code == 200
+            assert logged_in.json()["last_name"] == "Ivanova"
     finally:
         app.dependency_overrides.clear()

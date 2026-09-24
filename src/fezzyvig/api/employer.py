@@ -1,7 +1,6 @@
 """Эндпоинты OAuth работодателя и синхронизации вакансий HeadHunter."""
 
 import logging
-
 from datetime import UTC, datetime
 from typing import Annotated
 from urllib.parse import quote

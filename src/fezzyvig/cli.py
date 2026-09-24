@@ -16,6 +16,8 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Add a user to Fezzyvig")
     parser.add_argument("email", help="User email address")
     parser.add_argument("--password", help="Password (otherwise read from stdin)")
+    parser.add_argument("--first-name", help="User first name")
+    parser.add_argument("--last-name", help="User last name")
     args = parser.parse_args(argv)
 
     if args.password is not None:
@@ -34,7 +36,7 @@ def main(argv: list[str] | None = None) -> int:
     with Session(engine) as session:
         service = AuthService(session, timedelta(days=get_settings().session_lifetime_days))
         try:
-            user = service.register(args.email, password)
+            user = service.register(args.email, password, args.first_name, args.last_name)
         except AuthError as exc:
             print(f"Could not add user: {exc}", file=sys.stderr)
             return 1

@@ -12,6 +12,7 @@ from alembic.operations import Operations
 def test_user_migrations(monkeypatch: pytest.MonkeyPatch) -> None:
     timestamp_migration = import_module("fezzyvig.db.migrations.versions.0004_user_timestamps")
     flags_migration = import_module("fezzyvig.db.migrations.versions.0005_user_flags")
+    names_migration = import_module("fezzyvig.db.migrations.versions.0006_user_names")
     engine = sa.create_engine("sqlite://")
     metadata = sa.MetaData()
     tables = [
@@ -32,6 +33,7 @@ def test_user_migrations(monkeypatch: pytest.MonkeyPatch) -> None:
         operations = Operations(MigrationContext.configure(connection))
         monkeypatch.setattr(timestamp_migration, "op", operations)
         monkeypatch.setattr(flags_migration, "op", operations)
+        monkeypatch.setattr(names_migration, "op", operations)
 
         timestamp_migration.upgrade()
         for table in tables:
@@ -53,6 +55,17 @@ def test_user_migrations(monkeypatch: pytest.MonkeyPatch) -> None:
         assert user_row._mapping["is_active"] == 1
         assert user_row._mapping["is_superuser"] == 0
 
+        names_migration.upgrade()
+        user_columns = {
+            column["name"] for column in sa.inspect(connection).get_columns("app_user")
+        }
+        assert {"first_name", "last_name"} <= user_columns
+        assert connection.execute(sa.text("SELECT first_name, last_name FROM app_user")).one() == (
+            None,
+            None,
+        )
+
+        names_migration.downgrade()
         flags_migration.downgrade()
         timestamp_migration.downgrade()
         for table in tables:
@@ -63,3 +76,5 @@ def test_user_migrations(monkeypatch: pytest.MonkeyPatch) -> None:
             if table.name == "app_user":
                 assert "is_active" not in column_names
                 assert "is_superuser" not in column_names
+                assert "first_name" not in column_names
+                assert "last_name" not in column_names
