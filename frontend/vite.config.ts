@@ -13,6 +13,7 @@ export default defineConfig(({ command }) => ({
   server: {
     port: 5174,
     proxy: {
+      "/auth": "http://127.0.0.1:8000",
       "/employer": "http://127.0.0.1:8000",
     },
   },

@@ -20,6 +20,12 @@ docker compose up --build
 - Swagger UI: http://localhost:9081/docs;
 - health check: http://localhost:9081/health.
 
+Создайте пользователя командой (пароль будет запрошен без отображения):
+
+```bash
+docker compose exec api fezzyvig-add-user user@example.com
+```
+
 Пара OAuth-токенов хранится в базе данных и автоматически обновляется после истечения
 `access_token`. Новый одноразовый `refresh_token` сохраняется при каждой ротации. Перед
 production-развёртыванием нужны шифрование токенов в хранилище, идентификация
@@ -44,9 +50,19 @@ DATABASE_URL=postgresql+psycopg://fezzyvig:fezzyvig@localhost:5432/fezzyvig
 Alembic применяет только ещё не установленные миграции. После обновления приложения
 команду `alembic upgrade head` следует выполнить перед запуском.
 
-При первом открытии создайте пользователя через форму регистрации. После входа
-HH-токены и вакансии будут храниться отдельно для каждого пользователя. Сессия
-передаётся в защищённой от JavaScript `HttpOnly` cookie.
+Форма регистрации пока скрыта. Локально пользователя можно создать командой
+`fezzyvig-add-user user@example.com`. Пароль также можно передать аргументом
+`--password` или через стандартный ввод:
+
+```bash
+printf '%s\n' "$NEW_USER_PASSWORD" | fezzyvig-add-user user@example.com
+```
+
+Гость перенаправляется на `/login`. После входа
+HH-токены и вакансии хранятся отдельно для каждого пользователя. Сессия
+передаётся в защищённой от JavaScript `HttpOnly` cookie. Тексты интерфейса
+настраиваются в `frontend/src/branding.ts`, цвета — в начале
+`frontend/src/styles.css`.
 
 Во втором терминале:
 
@@ -63,6 +79,14 @@ pytest
 ruff check src tests
 mypy src
 cd frontend && npm run typecheck
+```
+
+Сообщения ошибок API переводятся на русский при заголовке `Accept-Language: ru`.
+Без него API возвращает исходные английские сообщения. После изменения каталога
+`src/fezzyvig/locale/ru/LC_MESSAGES/fezzyvig.po` обновите бинарный каталог:
+
+```bash
+msgfmt src/fezzyvig/locale/ru/LC_MESSAGES/fezzyvig.po -o src/fezzyvig/locale/ru/LC_MESSAGES/fezzyvig.mo
 ```
 
 ## CI/CD

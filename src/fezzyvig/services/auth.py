@@ -1,4 +1,4 @@
-"""Password authentication and server-side session management."""
+"""Аутентификация по паролю и управление серверными сессиями."""
 
 import base64
 import hashlib
@@ -16,18 +16,18 @@ EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
 
 class AuthError(ValueError):
-    """An authentication request cannot be completed."""
+    """Ошибка выполнения запроса аутентификации."""
 
 
 class AuthService:
-    """Create users and manage opaque browser sessions."""
+    """Создавать пользователей и управлять непрозрачными токенами сессий."""
 
     def __init__(self, session: Session, session_lifetime: timedelta) -> None:
         self._session = session
         self._session_lifetime = session_lifetime
 
     def register(self, email: str, password: str) -> User:
-        """Create a user with a normalized email and hashed password."""
+        """Создать пользователя, нормализовав адрес и хешировав пароль."""
         normalized_email = self._normalize_email(email)
         self._validate_password(password)
         user = User(email=normalized_email, password_hash=self._hash_password(password))
@@ -41,15 +41,19 @@ class AuthService:
         return user
 
     def authenticate(self, email: str, password: str) -> User:
-        """Return a user when the supplied credentials are valid."""
+        """Вернуть пользователя при корректных учётных данных."""
         normalized_email = self._normalize_email(email)
         user = self._session.exec(select(User).where(User.email == normalized_email)).first()
-        if user is None or not self._verify_password(password, user.password_hash):
+        if (
+            user is None
+            or not user.is_active
+            or not self._verify_password(password, user.password_hash)
+        ):
             raise AuthError("Invalid email or password")
         return user
 
     def create_session(self, user: User) -> str:
-        """Create and persist a new opaque session token."""
+        """Создать и сохранить новый непрозрачный токен сессии."""
         if user.id is None:
             raise AuthError("User must be persisted before creating a session")
         token = secrets.token_urlsafe(32)
@@ -64,7 +68,7 @@ class AuthService:
         return token
 
     def get_user(self, token: str | None) -> User | None:
-        """Resolve an unexpired session token to its user."""
+        """Найти пользователя по действующему токену сессии."""
         if not token:
             return None
         user_session = self._session.get(UserSession, self._hash_token(token))
@@ -74,10 +78,15 @@ class AuthService:
             self._session.delete(user_session)
             self._session.commit()
             return None
-        return self._session.get(User, user_session.user_id)
+        user = self._session.get(User, user_session.user_id)
+        if user is None or not user.is_active:
+            self._session.delete(user_session)
+            self._session.commit()
+            return None
+        return user
 
     def delete_session(self, token: str | None) -> None:
-        """Revoke a session token if it exists."""
+        """Завершить сессию, если её токен существует."""
         if not token:
             return
         user_session = self._session.get(UserSession, self._hash_token(token))

@@ -1,4 +1,4 @@
-"""User registration and session authentication endpoints."""
+"""Эндпоинты регистрации пользователей и аутентификации по сессии."""
 
 from fastapi import APIRouter, HTTPException, Request, Response, status
 
@@ -34,7 +34,7 @@ def _set_session_cookie(response: Response, token: str) -> None:
 def register(
     credentials: AuthCredentials, response: Response, service: AuthServiceDependency
 ) -> UserResponse:
-    """Register a user and start an authenticated browser session."""
+    """Зарегистрировать пользователя и создать браузерную сессию."""
     try:
         user = service.register(credentials.email, credentials.password)
         token = service.create_session(user)
@@ -48,7 +48,7 @@ def register(
 def login(
     credentials: AuthCredentials, response: Response, service: AuthServiceDependency
 ) -> UserResponse:
-    """Authenticate credentials and start a browser session."""
+    """Проверить учётные данные и создать браузерную сессию."""
     try:
         user = service.authenticate(credentials.email, credentials.password)
     except AuthError as exc:
@@ -59,12 +59,12 @@ def login(
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
 def logout(request: Request, response: Response, service: AuthServiceDependency) -> None:
-    """Revoke the current session and clear its browser cookie."""
+    """Завершить текущую сессию и удалить браузерную cookie."""
     service.delete_session(request.cookies.get(SESSION_COOKIE))
     response.delete_cookie(SESSION_COOKIE, path="/")
 
 
 @router.get("/me", response_model=UserResponse)
 def current_user(user: CurrentUserDependency) -> UserResponse:
-    """Return the currently authenticated user."""
+    """Вернуть текущего аутентифицированного пользователя."""
     return _user_response(user)

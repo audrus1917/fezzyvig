@@ -1,4 +1,4 @@
-"""Create and configure the Fezzyvig FastAPI application."""
+"""Создание и настройка FastAPI-приложения Fezzyvig."""
 
 import logging
 import sys
@@ -7,14 +7,18 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 import httpx
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.exception_handlers import http_exception_handler
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
+from starlette.exceptions import HTTPException
+from starlette.responses import Response
 
 from fezzyvig.api.auth import router as auth_router
 from fezzyvig.api.employer import callback_router
 from fezzyvig.api.employer import router as employer_router
 from fezzyvig.config.settings import get_settings
+from fezzyvig.i18n import translate
 
 
 def configure_logging(level: str) -> None:
@@ -43,6 +47,20 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 
 app = FastAPI(title="Fezzyvig", version="0.1.0", lifespan=lifespan)
+
+
+@app.exception_handler(HTTPException)
+async def localized_http_exception(request: Request, exc: HTTPException) -> Response:
+    """Перевести текст ошибки API, сохранив её статус и заголовки."""
+    if isinstance(exc.detail, str):
+        exc = HTTPException(
+            status_code=exc.status_code,
+            detail=translate(request, exc.detail),
+            headers=exc.headers,
+        )
+    return await http_exception_handler(request, exc)
+
+
 app.include_router(auth_router)
 app.include_router(employer_router)
 app.include_router(callback_router)
@@ -54,6 +72,12 @@ app.mount("/static", StaticFiles(directory=static_directory), name="static")
 @app.get("/", include_in_schema=False)
 def dashboard() -> FileResponse:
     """Вернуть главную страницу панели управления."""
+    return FileResponse(static_directory / "index.html")
+
+
+@app.get("/login", include_in_schema=False)
+def login_page() -> FileResponse:
+    """Вернуть отдельную страницу входа."""
     return FileResponse(static_directory / "index.html")
 
 

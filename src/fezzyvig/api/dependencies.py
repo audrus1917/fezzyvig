@@ -1,4 +1,4 @@
-"""Request-scoped application dependencies."""
+"""Зависимости приложения для обработки HTTP-запросов."""
 
 from datetime import timedelta
 from typing import Annotated
@@ -19,7 +19,7 @@ SessionDependency = Annotated[Session, Depends(get_session)]
 def get_auth_service(
     session: SessionDependency, settings: Annotated[Settings, Depends(get_settings)]
 ) -> AuthService:
-    """Create the request-scoped authentication service."""
+    """Создать сервис аутентификации для текущего запроса."""
     return AuthService(session, timedelta(days=settings.session_lifetime_days))
 
 
@@ -27,7 +27,7 @@ AuthServiceDependency = Annotated[AuthService, Depends(get_auth_service)]
 
 
 def get_current_user(request: Request, service: AuthServiceDependency) -> User:
-    """Require a valid browser session and return its user."""
+    """Проверить браузерную сессию и вернуть её пользователя."""
     user = service.get_user(request.cookies.get(SESSION_COOKIE))
     if user is None:
         raise HTTPException(

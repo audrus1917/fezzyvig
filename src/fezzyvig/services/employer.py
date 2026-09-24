@@ -3,6 +3,7 @@
 import base64
 import hashlib
 import secrets
+import logging
 from datetime import UTC, datetime, timedelta
 from typing import cast
 
@@ -11,6 +12,8 @@ from sqlmodel import Session, col, select
 
 from fezzyvig.models.oauth_token import EmployerOAuthToken
 from fezzyvig.models.vacancy import EmployerVacancy
+
+logger = logging.getLogger(__name__)
 
 
 class EmployerSyncError(RuntimeError):
@@ -21,7 +24,7 @@ class EmployerService:
     """Синхронизация вакансий работодателя без записи данных в HeadHunter."""
 
     def __init__(self, session: Session, client: httpx.AsyncClient, user_id: int) -> None:
-        """Initialize the service for a specific authenticated user."""
+        """Инициализировать сервис для конкретного пользователя."""
         self._session = session
         self._client = client
         self.user_id = user_id
@@ -68,11 +71,16 @@ class EmployerService:
     async def sync_vacancies(self) -> int:
         """Синхронизировать вакансии работодателя в локальном хранилище."""
         try:
+            # FIXME: удалить всю отладку
+            logger.debug("Step 1")
             access_token = await self._get_access_token()
+            logger.debug("Step 2: %s", access_token)
+
             response = await self._client.get(
                 "/employer/vacancies",
                 headers=self._authorization_headers(access_token),
             )
+            logger.debug(response)
             if self._is_token_expired(response):
                 access_token = await self._refresh_access_token(access_token)
                 response = await self._client.get(

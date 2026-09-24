@@ -1,6 +1,7 @@
 """Загрузка типизированных настроек приложения из переменных окружения."""
 
 from functools import lru_cache
+from zoneinfo import ZoneInfo
 
 from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -20,6 +21,14 @@ class Settings(BaseSettings):
     hh_redirect_uri: str | None = None
     session_cookie_secure: bool = False
     session_lifetime_days: int = Field(default=30, ge=1, le=365)
+    tz_name: str = "Europe/Minsk"
+    tz_offset: int = 3
+
+    @property
+    def TZ(self) -> ZoneInfo:
+        """Возвращает таймзону."""
+
+        return ZoneInfo(self.tz_name)
 
 
 @lru_cache
