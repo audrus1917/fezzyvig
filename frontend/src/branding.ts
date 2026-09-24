@@ -1,6 +1,6 @@
 export const branding = {
-  productName: "Fezzyvig",
-  workspaceTitle: "Рабочее пространство",
+  productName: "IDP HR",
+  workspaceTitle: "Кабинет",
   loadingWorkspace: "Загружаем рабочее пространство…",
   openMenu: "Открыть меню",
   closeMenu: "Закрыть меню",

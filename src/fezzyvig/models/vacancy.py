@@ -20,7 +20,7 @@ class EmployerVacancy(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int | None] = mapped_column(
-        ForeignKey("app_user.id", ondelete="CASCADE"), nullable=True, index=True
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=True, index=True
     )
     source: Mapped[str] = mapped_column(String(50), default="hh", index=True)
     external_id: Mapped[str] = mapped_column(String(255), index=True)

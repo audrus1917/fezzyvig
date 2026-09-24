@@ -1,4 +1,4 @@
-"""Экспорт доменных моделей, хранящихся в базе данных."""
+"""Доменные модели."""
 
 from fezzyvig.models.oauth_token import EmployerOAuthToken
 from fezzyvig.models.user import User, UserSession

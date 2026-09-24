@@ -1,4 +1,4 @@
-"""Пользователи приложения и аутентифицированные сессии."""
+"""Модели для пользователей приложения и аутентифицированных сессий."""
 
 from datetime import datetime
 
@@ -10,9 +10,9 @@ from fezzyvig.models.mixins import ChangedAtMixin
 
 
 class User(ChangedAtMixin, Base):
-    """Пользователь, имеющий доступ к кабинету работодателя."""
+    """Модель для пользователя, имеющего доступ."""
 
-    __tablename__ = "app_user"
+    __tablename__ = "users"
 
     id: Mapped[int] = mapped_column(primary_key=True)
     email: Mapped[str] = mapped_column(String(320), unique=True, index=True)
@@ -22,14 +22,21 @@ class User(ChangedAtMixin, Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     is_superuser: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
+    def __repr__(self) -> str:
+        return f"User(email={self.email})"
+
 
 class UserSession(ChangedAtMixin, Base):
     """Браузерная сессия, которую можно завершить на сервере."""
 
-    __tablename__ = "user_session"
+    __tablename__ = "user_sessions"
 
     token_hash: Mapped[str] = mapped_column(String(64), primary_key=True)
     user_id: Mapped[int] = mapped_column(
-        ForeignKey("app_user.id", ondelete="CASCADE"), index=True
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
     )
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+    def __repr__(self) -> str:
+        return f"UserSession(user_id={self.ser_id})"
+
