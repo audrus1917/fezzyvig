@@ -5,11 +5,13 @@ import sys
 from datetime import timedelta
 
 import pytest
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session
 from sqlalchemy.pool import StaticPool
-from sqlmodel import Session, SQLModel, create_engine
 
 from fezzyvig import cli
 from fezzyvig.db import database
+from fezzyvig.models.base import Base
 from fezzyvig.services.auth import AuthService
 
 
@@ -21,7 +23,7 @@ def user_database(monkeypatch: pytest.MonkeyPatch) -> None:
         connect_args={"check_same_thread": False},
         poolclass=StaticPool,
     )
-    SQLModel.metadata.create_all(engine)
+    Base.metadata.create_all(engine)
     monkeypatch.setattr(database, "engine", engine)
 
 

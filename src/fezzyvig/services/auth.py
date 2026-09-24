@@ -8,9 +8,10 @@ import secrets
 from datetime import UTC, datetime, timedelta
 
 from sqlalchemy.exc import IntegrityError
-from sqlmodel import Session, select
+from sqlalchemy.orm import Session
 
 from fezzyvig.models.user import User, UserSession
+from fezzyvig.repositories.auth import AuthRepository
 
 EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
@@ -24,6 +25,7 @@ class AuthService:
 
     def __init__(self, session: Session, session_lifetime: timedelta) -> None:
         self._session = session
+        self._repository = AuthRepository(session)
         self._session_lifetime = session_lifetime
 
     def register(
@@ -40,7 +42,7 @@ class AuthService:
             last_name=last_name,
             password_hash=self._hash_password(password),
         )
-        self._session.add(user)
+        self._repository.add_user(user)
         try:
             self._session.commit()
         except IntegrityError as exc:
@@ -52,7 +54,7 @@ class AuthService:
     def authenticate(self, email: str, password: str) -> User:
         """Вернуть пользователя при корректных учётных данных."""
         normalized_email = self._normalize_email(email)
-        user = self._session.exec(select(User).where(User.email == normalized_email)).first()
+        user = self._repository.get_user_by_email(normalized_email)
         if (
             user is None
             or not user.is_active
@@ -66,7 +68,7 @@ class AuthService:
         if user.id is None:
             raise AuthError("User must be persisted before creating a session")
         token = secrets.token_urlsafe(32)
-        self._session.add(
+        self._repository.add_session(
             UserSession(
                 token_hash=self._hash_token(token),
                 user_id=user.id,
@@ -80,16 +82,16 @@ class AuthService:
         """Найти пользователя по действующему токену сессии."""
         if not token:
             return None
-        user_session = self._session.get(UserSession, self._hash_token(token))
+        user_session = self._repository.get_session(self._hash_token(token))
         if user_session is None:
             return None
         if self._as_utc(user_session.expires_at) <= datetime.now(UTC):
-            self._session.delete(user_session)
+            self._repository.delete_session(user_session)
             self._session.commit()
             return None
-        user = self._session.get(User, user_session.user_id)
+        user = self._repository.get_user(user_session.user_id)
         if user is None or not user.is_active:
-            self._session.delete(user_session)
+            self._repository.delete_session(user_session)
             self._session.commit()
             return None
         return user
@@ -98,9 +100,9 @@ class AuthService:
         """Завершить сессию, если её токен существует."""
         if not token:
             return
-        user_session = self._session.get(UserSession, self._hash_token(token))
+        user_session = self._repository.get_session(self._hash_token(token))
         if user_session is not None:
-            self._session.delete(user_session)
+            self._repository.delete_session(user_session)
             self._session.commit()
 
     @staticmethod

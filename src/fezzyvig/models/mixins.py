@@ -1,10 +1,9 @@
-"""Общие поля моделей SQLModel."""
+"""Общие поля времени моделей базы данных."""
 
 from datetime import datetime
-from typing import cast
 
 from sqlalchemy import DateTime
-from sqlmodel import Field, SQLModel
+from sqlalchemy.orm import Mapped, mapped_column
 
 from fezzyvig.config.settings import get_settings
 
@@ -13,18 +12,12 @@ def _current_time() -> datetime:
     return datetime.now(get_settings().TZ)
 
 
-class ChangedAtMixin(SQLModel):
+class ChangedAtMixin:
     """Общие поля времени создания и изменения записи."""
 
-    # SQLModel принимает экземпляр типа SQLAlchemy, но аннотация sa_type требует класс.
-    created_at: datetime = Field(
-        default_factory=_current_time,
-        sa_type=cast(type[DateTime], DateTime(timezone=True)),
-        nullable=False,
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=_current_time, nullable=False
     )
-    updated_at: datetime = Field(
-        default_factory=_current_time,
-        sa_type=cast(type[DateTime], DateTime(timezone=True)),
-        nullable=False,
-        sa_column_kwargs={"onupdate": _current_time},
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=_current_time, onupdate=_current_time, nullable=False
     )

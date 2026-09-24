@@ -1,12 +1,16 @@
 """Тесты аутентификации пользователей и серверных сессий."""
 
 from collections.abc import Iterator
-from datetime import timedelta
+from datetime import UTC, datetime, timedelta
+from hashlib import sha256
 
 import pytest
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session
 from sqlalchemy.pool import StaticPool
-from sqlmodel import Session, SQLModel, create_engine
 
+from fezzyvig.models.base import Base
+from fezzyvig.models.user import UserSession
 from fezzyvig.services.auth import AuthError, AuthService
 
 
@@ -18,7 +22,7 @@ def auth_service() -> Iterator[AuthService]:
         connect_args={"check_same_thread": False},
         poolclass=StaticPool,
     )
-    SQLModel.metadata.create_all(engine)
+    Base.metadata.create_all(engine)
     with Session(engine) as session:
         yield AuthService(session, timedelta(days=30))
 
@@ -70,3 +74,41 @@ def test_invalid_name(auth_service: AuthService) -> None:
     """Отклонить имя из одних пробелов."""
     with pytest.raises(AuthError, match="Enter a name"):
         auth_service.register("user@example.com", "secret-pass", "   ", "Ivanova")
+
+
+@pytest.mark.parametrize(
+    ("email", "password", "message"),
+    [
+        ("invalid", "secret-pass", "valid email"),
+        ("user@example.com", "short", "at least 8"),
+        ("user@example.com", "x" * 257, "too long"),
+    ],
+)
+def test_registration_rejects_invalid_input(
+    auth_service: AuthService, email: str, password: str, message: str
+) -> None:
+    with pytest.raises(AuthError, match=message):
+        auth_service.register(email, password)
+
+
+def test_expired_session_is_removed(auth_service: AuthService) -> None:
+    user = auth_service.register("user@example.com", "secret-pass")
+    token = auth_service.create_session(user)
+    token_hash = sha256(token.encode()).hexdigest()
+    stored = auth_service._session.get(UserSession, token_hash)
+    assert stored is not None
+    stored.expires_at = datetime.now(UTC) - timedelta(seconds=1)
+    auth_service._session.commit()
+
+    assert auth_service.get_user(token) is None
+    assert auth_service._session.get(UserSession, token_hash) is None
+
+
+def test_logout_revokes_session(auth_service: AuthService) -> None:
+    user = auth_service.register("user@example.com", "secret-pass")
+    token = auth_service.create_session(user)
+
+    auth_service.delete_session(token)
+
+    assert auth_service.get_user(token) is None
+    auth_service.delete_session(token)
