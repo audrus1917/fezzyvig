@@ -1,0 +1,52 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: fezzyvig 0.1.0\n"
+"PO-Revision-Date: 2026-09-23 00:00+0300\n"
+"Last-Translator: Fezzyvig contributors\n"
+"Language-Team: Russian\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: ru\n"
+
+msgid "A user with this email already exists"
+msgstr "Пользователь с таким адресом электронной почты уже существует"
+
+msgid "Invalid email or password"
+msgstr "Неверный адрес электронной почты или пароль"
+
+msgid "Enter a valid email address"
+msgstr "Введите корректный адрес электронной почты"
+
+msgid "Password must contain at least 8 characters"
+msgstr "Пароль должен содержать не менее 8 символов"
+
+msgid "Password is too long"
+msgstr "Пароль слишком длинный"
+
+msgid "Enter a name between 1 and 100 characters"
+msgstr "Введите имя длиной от 1 до 100 символов"
+
+msgid "Authentication required"
+msgstr "Требуется авторизация"
+
+msgid "HH OAuth is not configured"
+msgstr "OAuth HeadHunter не настроен"
+
+msgid "Invalid or expired OAuth state"
+msgstr "Состояние OAuth недействительно или срок его действия истёк"
+
+msgid "HH OAuth token exchange failed"
+msgstr "Не удалось обменять код OAuth HeadHunter на токен"
+
+msgid "Unable to load employer vacancies from HH"
+msgstr "Не удалось загрузить вакансии работодателя из HeadHunter"
+
+msgid "HH employer account is not connected"
+msgstr "Аккаунт работодателя HeadHunter не подключён"
+
+msgid "HH OAuth token refresh failed"
+msgstr "Не удалось обновить токен OAuth HeadHunter"
+
+msgid "HH employer account connected"
+msgstr "Аккаунт работодателя HeadHunter подключён"

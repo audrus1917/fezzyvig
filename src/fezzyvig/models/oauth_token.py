@@ -9,7 +9,7 @@ from sqlmodel import Field, SQLModel
 class EmployerOAuthToken(SQLModel, table=True):
     """Активная пара OAuth-токенов работодателя."""
 
-    __tablename__ = "employer_oauth_token"
+    __tablename__ = "employer_oauth_token"  # pyright: ignore[reportAssignmentType]
     __table_args__ = (
         UniqueConstraint("user_id", "provider", name="uq_employer_oauth_token_user_provider"),
     )

@@ -5,6 +5,8 @@ export class ApiError extends Error {
   }
 }
 
+export const unauthorizedEvent = "fezzyvig:unauthorized";
+
 export async function api<T>(path: string, options: RequestInit = {}): Promise<T> {
   const headers = new Headers(options.headers);
   if (options.body && !headers.has("Content-Type")) {
@@ -12,6 +14,7 @@ export async function api<T>(path: string, options: RequestInit = {}): Promise<T
   }
   const response = await fetch(path, { ...options, headers });
   if (!response.ok) {
+    if (response.status === 401) window.dispatchEvent(new Event(unauthorizedEvent));
     let message = `Ошибка ${response.status}`;
     try {
       const body = (await response.json()) as { detail?: string };

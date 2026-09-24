@@ -1,7 +1,7 @@
-"""Add users, browser sessions, and per-user employer data.
+"""Добавление пользователей, браузерных сессий и привязки данных работодателя.
 
-Revision ID: 0003
-Revises: 0002
+Идентификатор ревизии: 0003
+Предыдущая ревизия: 0002
 """
 
 from collections.abc import Sequence
@@ -16,7 +16,7 @@ depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
-    """Create authentication tables and scope employer records to users."""
+    """Создать таблицы аутентификации и привязать записи работодателя к пользователям."""
     op.create_table(
         "app_user",
         sa.Column("id", sa.Integer(), nullable=False),
@@ -78,7 +78,7 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    """Remove authentication tables and per-user ownership columns."""
+    """Удалить таблицы аутентификации и поля владельца записей."""
     op.drop_constraint(
         "uq_employer_oauth_token_user_provider", "employer_oauth_token", type_="unique"
     )

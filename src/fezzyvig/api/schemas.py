@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field
 
 
 class AuthCredentials(BaseModel):
-    """Credentials accepted by registration and login endpoints."""
+    """Учётные данные для регистрации и входа."""
 
     email: str
     password: str
@@ -20,7 +20,7 @@ class RegistrationCredentials(AuthCredentials):
 
 
 class UserResponse(BaseModel):
-    """Public representation of an authenticated user."""
+    """Публичное представление аутентифицированного пользователя."""
 
     id: int
     email: str

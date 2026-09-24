@@ -1,4 +1,4 @@
-"""Test application logging configuration."""
+"""Тесты настройки журналирования приложения."""
 
 import logging
 import sys
@@ -10,7 +10,7 @@ from fezzyvig.main import configure_logging
 
 
 def test_logging_uses_stdout(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Application logs are emitted to the container output stream."""
+    """Журналы приложения отправляются в стандартный вывод контейнера."""
     options: dict[str, Any] = {}
 
     def capture_options(**kwargs: Any) -> None:

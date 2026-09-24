@@ -9,7 +9,7 @@ from sqlmodel import Field, SQLModel
 class EmployerVacancy(SQLModel, table=True):
     """Вакансия, импортированная из аккаунта работодателя на HeadHunter."""
 
-    __tablename__ = "employer_vacancy"
+    __tablename__ = "employer_vacancy"  # pyright: ignore[reportAssignmentType]
     __table_args__ = (
         UniqueConstraint(
             "user_id", "source", "external_id", name="uq_employer_vacancy_user_source_id"
