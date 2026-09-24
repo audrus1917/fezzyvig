@@ -4,15 +4,18 @@ import base64
 import hashlib
 import logging
 import secrets
+from collections.abc import MutableMapping
 from datetime import UTC, datetime, timedelta
 from typing import cast
+from urllib.parse import quote
 
 import httpx
-from sqlmodel import Session, col, select
+from sqlalchemy.orm import Session
 
-from fezzyvig.config.settings import get_settings
+from fezzyvig.config.settings import Settings, get_settings
 from fezzyvig.models.oauth_token import EmployerOAuthToken
 from fezzyvig.models.vacancy import EmployerVacancy
+from fezzyvig.repositories.employer import EmployerRepository
 
 settings = get_settings()
 logger = logging.getLogger(__name__)
@@ -22,12 +25,17 @@ class EmployerSyncError(RuntimeError):
     """Ошибка синхронизации данных работодателя через HeadHunter."""
 
 
+class InvalidOAuthStateError(EmployerSyncError):
+    """Состояние OAuth отсутствует, истекло или принадлежит другому пользователю."""
+
+
 class EmployerService:
     """Синхронизация вакансий работодателя без записи данных в HeadHunter."""
 
     def __init__(self, session: Session, client: httpx.AsyncClient, user_id: int) -> None:
         """Инициализировать сервис для конкретного пользователя."""
         self._session = session
+        self._repository = EmployerRepository(session, user_id)
         self._client = client
         self.user_id = user_id
 
@@ -41,6 +49,52 @@ class EmployerService:
             .rstrip("=")
         )
         return secrets.token_urlsafe(32), verifier, challenge
+
+    def authorization_url(
+        self, settings: Settings, oauth_states: MutableMapping[str, tuple[str, float, int]]
+    ) -> str:
+        """Сформировать ссылку авторизации и сохранить временное состояние OAuth."""
+        if not settings.hh_client_id or not settings.hh_redirect_uri:
+            raise EmployerSyncError("HH OAuth is not configured")
+        state, verifier, challenge = self.create_pkce()
+        oauth_states[state] = (verifier, datetime.now(UTC).timestamp() + 600, self.user_id)
+        return (
+            "https://hh.ru/oauth/authorize?response_type=code&client_id="
+            + quote(settings.hh_client_id)
+            + "&redirect_uri="
+            + quote(settings.hh_redirect_uri)
+            + "&state="
+            + state
+            + "&code_challenge="
+            + challenge
+            + "&code_challenge_method=S256"
+        )
+
+    async def complete_authorization(
+        self,
+        code: str,
+        state: str,
+        settings: Settings,
+        oauth_states: MutableMapping[str, tuple[str, float, int]],
+    ) -> None:
+        """Проверить состояние OAuth и сохранить выданные токены."""
+        stored = oauth_states.pop(state, None)
+        if (
+            not stored
+            or stored[1] < datetime.now(UTC).timestamp()
+            or stored[2] != self.user_id
+            or not settings.hh_client_id
+            or not settings.hh_client_secret
+            or not settings.hh_redirect_uri
+        ):
+            raise InvalidOAuthStateError("Invalid or expired OAuth state")
+        await self.exchange_code(
+            code,
+            stored[0],
+            settings.hh_client_id,
+            settings.hh_client_secret.get_secret_value(),
+            settings.hh_redirect_uri,
+        )
 
     async def exchange_code(
         self,
@@ -109,13 +163,7 @@ class EmployerService:
             if not isinstance(item, dict) or "id" not in item:
                 continue
             external_id = str(item["id"])
-            record = self._session.exec(
-                select(EmployerVacancy).where(
-                    EmployerVacancy.user_id == self.user_id,
-                    EmployerVacancy.source == "hh",
-                    EmployerVacancy.external_id == external_id,
-                )
-            ).first()
+            record = self._repository.get_vacancy(external_id)
             if record is None:
                 record = EmployerVacancy(
                     user_id=self.user_id,
@@ -129,20 +177,15 @@ class EmployerService:
             record.company = str((item.get("employer") or {}).get("name", record.company))
             record.url = str(item.get("alternate_url", record.url))
             record.raw_payload = cast(dict[str, object], item)
-            record.synced_at = datetime.now(record.synced_at.tzinfo)
-            self._session.add(record)
+            record.synced_at = datetime.now(UTC)
+            self._repository.save_vacancy(record)
             synced += 1
         self._session.commit()
         return synced
 
     def list_vacancies(self) -> list[EmployerVacancy]:
         """Вернуть вакансии по убыванию времени последней синхронизации."""
-        statement = (
-            select(EmployerVacancy)
-            .where(EmployerVacancy.user_id == self.user_id)
-            .order_by(col(EmployerVacancy.synced_at).desc())
-        )
-        return list(self._session.exec(statement).all())
+        return self._repository.list_vacancies()
 
     @staticmethod
     def _parse_tokens(response: httpx.Response) -> tuple[str, str, int]:
@@ -176,7 +219,7 @@ class EmployerService:
             token.refresh_token = refresh_token
             token.expires_at = now + timedelta(seconds=expires_in)
             token.updated_at = now
-        self._session.add(token)
+        self._repository.save_token(token)
         self._session.commit()
 
     async def _get_access_token(self) -> str | None:
@@ -192,15 +235,7 @@ class EmployerService:
         return access_token
 
     async def _refresh_access_token(self, stale_access_token: str | None) -> str:
-        statement = (
-            select(EmployerOAuthToken)
-            .where(
-                EmployerOAuthToken.user_id == self.user_id,
-                EmployerOAuthToken.provider == "hh",
-            )
-            .with_for_update()
-        )
-        token = self._session.exec(statement).first()
+        token = self._repository.get_token(for_update=True)
         if token is None:
             self._session.rollback()
             raise EmployerSyncError("HH employer account is not connected")
@@ -228,7 +263,7 @@ class EmployerService:
         token.refresh_token = refresh_token
         token.expires_at = now + timedelta(seconds=expires_in)
         token.updated_at = now
-        self._session.add(token)
+        self._repository.save_token(token)
         self._session.commit()
         return access_token
 
@@ -239,12 +274,7 @@ class EmployerService:
         return {"Authorization": f"Bearer {access_token}"}
 
     def _find_token(self) -> EmployerOAuthToken | None:
-        return self._session.exec(
-            select(EmployerOAuthToken).where(
-                EmployerOAuthToken.user_id == self.user_id,
-                EmployerOAuthToken.provider == "hh",
-            )
-        ).first()
+        return self._repository.get_token()
 
     @staticmethod
     def _is_token_expired(response: httpx.Response) -> bool:

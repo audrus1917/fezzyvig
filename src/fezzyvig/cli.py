@@ -5,7 +5,7 @@ import getpass
 import sys
 from datetime import timedelta
 
-from sqlmodel import Session
+from sqlalchemy.orm import Session
 
 from fezzyvig.config.settings import get_settings
 from fezzyvig.services.auth import AuthError, AuthService

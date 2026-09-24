@@ -33,6 +33,10 @@ production-развёртыванием нужны шифрование токе
 
 ## Локальная разработка
 
+Слои backend: `api` принимает HTTP-запросы и возвращает схемы Pydantic,
+`services` выполняет сценарии и управляет транзакциями, `repositories` содержит
+запросы к БД, `models` описывает таблицы SQLAlchemy. Схема БД обновляется через Alembic.
+
 ```bash
 uv sync
 source .venv/bin/activate

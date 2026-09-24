@@ -2,7 +2,8 @@
 
 from collections.abc import Generator
 
-from sqlmodel import Session, create_engine
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session
 
 from fezzyvig.config.settings import get_settings
 

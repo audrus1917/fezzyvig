@@ -3,11 +3,13 @@
 from collections.abc import Generator
 
 from fastapi.testclient import TestClient
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session
 from sqlalchemy.pool import StaticPool
-from sqlmodel import Session, SQLModel, create_engine
 
 from fezzyvig.db.database import get_session
 from fezzyvig.main import app
+from fezzyvig.models.base import Base
 
 
 def test_authentication_flow() -> None:
@@ -17,7 +19,7 @@ def test_authentication_flow() -> None:
         connect_args={"check_same_thread": False},
         poolclass=StaticPool,
     )
-    SQLModel.metadata.create_all(engine)
+    Base.metadata.create_all(engine)
 
     def session_override() -> Generator[Session, None, None]:
         with Session(engine) as session:

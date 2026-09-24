@@ -2,36 +2,34 @@
 
 from datetime import UTC, datetime
 
-from sqlalchemy import JSON, Column, DateTime, ForeignKey, Text, UniqueConstraint
-from sqlmodel import Field, SQLModel
+from sqlalchemy import JSON, DateTime, ForeignKey, String, Text, UniqueConstraint
+from sqlalchemy.orm import Mapped, mapped_column
+
+from fezzyvig.models.base import Base
 
 
-class EmployerVacancy(SQLModel, table=True):
+class EmployerVacancy(Base):
     """Вакансия, импортированная из аккаунта работодателя на HeadHunter."""
 
-    __tablename__ = "employer_vacancy"  # pyright: ignore[reportAssignmentType]
+    __tablename__ = "employer_vacancy"
     __table_args__ = (
         UniqueConstraint(
             "user_id", "source", "external_id", name="uq_employer_vacancy_user_source_id"
         ),
     )
 
-    id: int | None = Field(default=None, primary_key=True)
-    user_id: int | None = Field(
-        default=None,
-        sa_column=Column(ForeignKey("app_user.id", ondelete="CASCADE"), nullable=True, index=True),
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int | None] = mapped_column(
+        ForeignKey("app_user.id", ondelete="CASCADE"), nullable=True, index=True
     )
-    source: str = Field(default="hh", max_length=50, index=True)
-    external_id: str = Field(max_length=255, index=True)
-    title: str = Field(max_length=255, index=True)
-    company: str = Field(default="", max_length=255)
-    url: str = Field(max_length=2048)
-    description: str = Field(sa_column=Column(Text, nullable=False))
-    raw_payload: dict[str, object] = Field(
-        default_factory=dict, sa_column=Column(JSON, nullable=False)
-    )
-    published_at: datetime | None = Field(default=None, sa_column=Column(DateTime(timezone=True)))
-    synced_at: datetime = Field(
-        default_factory=lambda: datetime.now(UTC),
-        sa_column=Column(DateTime(timezone=True), nullable=False),
+    source: Mapped[str] = mapped_column(String(50), default="hh", index=True)
+    external_id: Mapped[str] = mapped_column(String(255), index=True)
+    title: Mapped[str] = mapped_column(String(255), index=True)
+    company: Mapped[str] = mapped_column(String(255), default="")
+    url: Mapped[str] = mapped_column(String(2048))
+    description: Mapped[str] = mapped_column(Text)
+    raw_payload: Mapped[dict[str, object]] = mapped_column(JSON, default=dict)
+    published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    synced_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(UTC)
     )

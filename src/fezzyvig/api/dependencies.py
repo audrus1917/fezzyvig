@@ -4,7 +4,7 @@ from datetime import timedelta
 from typing import Annotated
 
 from fastapi import Depends, HTTPException, Request, status
-from sqlmodel import Session
+from sqlalchemy.orm import Session
 
 from fezzyvig.config.settings import Settings, get_settings
 from fezzyvig.db.database import get_session

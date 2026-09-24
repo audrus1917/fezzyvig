@@ -2,28 +2,28 @@
 
 from datetime import UTC, datetime
 
-from sqlalchemy import Column, DateTime, ForeignKey, Text, UniqueConstraint
-from sqlmodel import Field, SQLModel
+from sqlalchemy import DateTime, ForeignKey, String, Text, UniqueConstraint
+from sqlalchemy.orm import Mapped, mapped_column
+
+from fezzyvig.models.base import Base
 
 
-class EmployerOAuthToken(SQLModel, table=True):
+class EmployerOAuthToken(Base):
     """Активная пара OAuth-токенов работодателя."""
 
-    __tablename__ = "employer_oauth_token"  # pyright: ignore[reportAssignmentType]
+    __tablename__ = "employer_oauth_token"
     __table_args__ = (
         UniqueConstraint("user_id", "provider", name="uq_employer_oauth_token_user_provider"),
     )
 
-    id: int | None = Field(default=None, primary_key=True)
-    user_id: int | None = Field(
-        default=None,
-        sa_column=Column(ForeignKey("app_user.id", ondelete="CASCADE"), nullable=True, index=True),
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int | None] = mapped_column(
+        ForeignKey("app_user.id", ondelete="CASCADE"), nullable=True, index=True
     )
-    provider: str = Field(default="hh", max_length=50)
-    access_token: str = Field(sa_column=Column(Text, nullable=False), repr=False)
-    refresh_token: str = Field(sa_column=Column(Text, nullable=False), repr=False)
-    expires_at: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
-    updated_at: datetime = Field(
-        default_factory=lambda: datetime.now(UTC),
-        sa_column=Column(DateTime(timezone=True), nullable=False),
+    provider: Mapped[str] = mapped_column(String(50), default="hh")
+    access_token: Mapped[str] = mapped_column(Text)
+    refresh_token: Mapped[str] = mapped_column(Text)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(UTC)
     )
