@@ -42,7 +42,9 @@ class EmployerVacancyResponse(BaseModel):
     synced_at: datetime
 
 
-class EmployerSyncResponse(BaseModel):
-    """Сводный результат синхронизации вакансий работодателя."""
+class EmployerSyncJobResponse(BaseModel):
+    """Состояние фоновой синхронизации вакансий работодателя."""
 
-    synced: int
+    task_id: str
+    status: str
+    synced: int | None

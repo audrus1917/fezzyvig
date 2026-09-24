@@ -88,7 +88,6 @@ onUnmounted(() => {
         <button class="menu-close" type="button" :aria-label="branding.closeMenu" @click="closeMenu">×</button>
       </div>
       <a href="#vacancies" @click="closeMenu">{{ branding.vacanciesTitle }}</a>
-      <a href="#connection" @click="closeMenu">{{ branding.connectionTitle }}</a>
       <div class="menu-footer">
         <span>{{ [user.first_name, user.last_name].filter(Boolean).join(" ") || user.email }}</span>
         <button type="button" @click="logout">{{ branding.logout }}</button>

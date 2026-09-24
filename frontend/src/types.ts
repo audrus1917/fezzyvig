@@ -16,7 +16,3 @@ export interface EmployerVacancy {
   published_at: string | null;
   synced_at: string;
 }
-
-export interface EmployerSyncResult {
-  synced: number;
-}

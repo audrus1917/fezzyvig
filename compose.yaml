@@ -13,6 +13,19 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "127.0.0.1:6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    volumes:
+      - redis_data:/data
+
   migrate:
     build: .
     command: ["alembic", "upgrade", "head"]
@@ -28,15 +41,39 @@ services:
       - "9081:8000"
     environment:
       DATABASE_URL: postgresql+psycopg://fezzyvig:fezzyvig@db:5432/fezzyvig
+      CELERY_BROKER_URL: redis://redis:6379/0
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
       HTTP_TIMEOUT: ${HTTP_TIMEOUT:-10}
       HH_USER_AGENT: ${HH_USER_AGENT:-Fezzyvig/0.1}
+      HH_EMPLOYER_ID: ${HH_EMPLOYER_ID:-}
       HH_CLIENT_ID: ${HH_CLIENT_ID:-}
       HH_CLIENT_SECRET: ${HH_CLIENT_SECRET:-}
       HH_REDIRECT_URI: ${HH_REDIRECT_URI:-http://localhost:9081/employer/oauth/callback}
     depends_on:
       migrate:
         condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+
+  worker:
+    build: .
+    command: ["celery", "-A", "fezzyvig.tasks:celery_app", "worker", "--loglevel=info"]
+    environment:
+      DATABASE_URL: postgresql+psycopg://fezzyvig:fezzyvig@db:5432/fezzyvig
+      CELERY_BROKER_URL: redis://redis:6379/0
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      HTTP_TIMEOUT: ${HTTP_TIMEOUT:-10}
+      HH_USER_AGENT: ${HH_USER_AGENT:-Fezzyvig/0.1}
+      HH_EMPLOYER_ID: ${HH_EMPLOYER_ID:-}
+      HH_CLIENT_ID: ${HH_CLIENT_ID:-}
+      HH_CLIENT_SECRET: ${HH_CLIENT_SECRET:-}
+      HH_REDIRECT_URI: ${HH_REDIRECT_URI:-http://localhost:9081/employer/oauth/callback}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
 
 volumes:
   postgres_data:
+  redis_data:

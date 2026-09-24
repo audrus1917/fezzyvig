@@ -11,10 +11,10 @@ from fezzyvig.models.base import Base
 class EmployerVacancy(Base):
     """Вакансия, импортированная из аккаунта работодателя на HeadHunter."""
 
-    __tablename__ = "employer_vacancy"
+    __tablename__ = "vacancies"
     __table_args__ = (
         UniqueConstraint(
-            "user_id", "source", "external_id", name="uq_employer_vacancy_user_source_id"
+            "user_id", "source", "external_id", name="uq_vacancies_user_source_id"
         ),
     )
 
