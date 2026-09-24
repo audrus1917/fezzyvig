@@ -1,0 +1,48 @@
+[project]
+name = "fezzyvig"
+version = "0.1.0"
+description = "A focused HeadHunter employer workspace"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "alembic>=1.13,<2",
+    "fastapi>=0.115,<1",
+    "httpx>=0.27,<1",
+    "psycopg[binary]>=3.2,<4",
+    "pydantic-settings>=2.5,<3",
+    "sqlmodel>=0.0.22,<0.1",
+    "uvicorn[standard]>=0.30,<1",
+]
+
+[project.scripts]
+fezzyvig-add-user = "fezzyvig.cli:main"
+
+[dependency-groups]
+dev = [
+    "mypy>=1.11,<2",
+    "pytest>=8.3,<9",
+    "ruff>=0.8,<1",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/fezzyvig"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+plugins = ["pydantic.mypy"]
