@@ -3,6 +3,7 @@
 import base64
 import hashlib
 import secrets
+import logging
 from datetime import UTC, datetime, timedelta
 from typing import cast
 
@@ -11,6 +12,8 @@ from sqlmodel import Session, col, select
 
 from fezzyvig.models.oauth_token import EmployerOAuthToken
 from fezzyvig.models.vacancy import EmployerVacancy
+
+logger = logging.getLogger(__name__)
 
 
 class EmployerSyncError(RuntimeError):
