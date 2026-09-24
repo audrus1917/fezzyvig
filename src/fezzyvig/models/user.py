@@ -13,6 +13,8 @@ class User(SQLModel, table=True):
 
     id: int | None = Field(default=None, primary_key=True)
     email: str = Field(max_length=320, unique=True, index=True)
+    first_name: str | None = Field(default=None, max_length=100)
+    last_name: str | None = Field(default=None, max_length=100)
     password_hash: str = Field(sa_column=Column(Text, nullable=False), repr=False)
     created_at: datetime = Field(
         default_factory=lambda: datetime.now(UTC),

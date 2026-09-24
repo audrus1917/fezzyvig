@@ -24,17 +24,19 @@ def auth_service() -> AuthService:
 
 def test_register_and_session(auth_service: AuthService) -> None:
     """Registration hashes passwords and creates a resolvable session."""
-    user = auth_service.register(" User@Example.com ", "secret-pass")
+    user = auth_service.register(" User@Example.com ", "secret-pass", " Anna ", " Ivanova ")
     token = auth_service.create_session(user)
 
     assert user.email == "user@example.com"
+    assert user.first_name == "Anna"
+    assert user.last_name == "Ivanova"
     assert user.password_hash != "secret-pass"
     assert auth_service.get_user(token) == user
 
 
 def test_invalid_credentials(auth_service: AuthService) -> None:
     """Authentication rejects an incorrect password."""
-    auth_service.register("user@example.com", "secret-pass")
+    auth_service.register("user@example.com", "secret-pass", "Anna", "Ivanova")
 
     with pytest.raises(AuthError, match="Invalid email or password"):
         auth_service.authenticate("user@example.com", "wrong-pass")
@@ -42,7 +44,13 @@ def test_invalid_credentials(auth_service: AuthService) -> None:
 
 def test_duplicate_email(auth_service: AuthService) -> None:
     """Normalized email addresses remain unique."""
-    auth_service.register("user@example.com", "secret-pass")
+    auth_service.register("user@example.com", "secret-pass", "Anna", "Ivanova")
 
     with pytest.raises(AuthError, match="already exists"):
-        auth_service.register("USER@example.com", "another-pass")
+        auth_service.register("USER@example.com", "another-pass", "Anna", "Ivanova")
+
+
+def test_invalid_name(auth_service: AuthService) -> None:
+    """Отклонить имя из одних пробелов."""
+    with pytest.raises(AuthError, match="Enter a name"):
+        auth_service.register("user@example.com", "secret-pass", "   ", "Ivanova")

@@ -8,6 +8,8 @@ import StatusMessage from "./StatusMessage.vue";
 const emit = defineEmits<{ authenticated: [user: User] }>();
 
 const mode = ref<"login" | "register">("login");
+const firstName = ref("");
+const lastName = ref("");
 const email = ref("");
 const password = ref("");
 const submitting = ref(false);
@@ -19,7 +21,13 @@ async function submit(): Promise<void> {
   try {
     const user = await api<User>(`/auth/${mode.value}`, {
       method: "POST",
-      body: JSON.stringify({ email: email.value, password: password.value }),
+      body: JSON.stringify({
+        email: email.value,
+        password: password.value,
+        ...(mode.value === "register"
+          ? { first_name: firstName.value, last_name: lastName.value }
+          : {}),
+      }),
     });
     emit("authenticated", user);
   } catch (error) {
@@ -48,6 +56,16 @@ function switchMode(): void {
     <form class="auth-card" @submit.prevent="submit">
       <p class="company">FEZZYVIG ACCOUNT</p>
       <h2>{{ mode === "login" ? "Вход" : "Регистрация" }}</h2>
+      <template v-if="mode === 'register'">
+        <label>
+          Имя
+          <input v-model.trim="firstName" type="text" autocomplete="given-name" required maxlength="100">
+        </label>
+        <label>
+          Фамилия
+          <input v-model.trim="lastName" type="text" autocomplete="family-name" required maxlength="100">
+        </label>
+      </template>
       <label>
         Email
         <input v-model.trim="email" type="email" autocomplete="email" required maxlength="320">

@@ -2,7 +2,7 @@
 
 from datetime import datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class AuthCredentials(BaseModel):
@@ -12,11 +12,20 @@ class AuthCredentials(BaseModel):
     password: str
 
 
+class RegistrationCredentials(AuthCredentials):
+    """Учётные данные и имя пользователя для регистрации."""
+
+    first_name: str = Field(min_length=1, max_length=100)
+    last_name: str = Field(min_length=1, max_length=100)
+
+
 class UserResponse(BaseModel):
     """Public representation of an authenticated user."""
 
     id: int
     email: str
+    first_name: str | None
+    last_name: str | None
     created_at: datetime
 
 

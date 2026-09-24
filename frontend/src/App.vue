@@ -35,7 +35,7 @@ onMounted(loadUser);
     </a>
     <p>Рабочее пространство работодателя</p>
     <div class="account-actions">
-      <span v-if="user">{{ user.email }}</span>
+      <span v-if="user">{{ [user.first_name, user.last_name].filter(Boolean).join(" ") || user.email }}</span>
       <button v-if="user" type="button" @click="logout">Выйти</button>
       <a v-else class="api-link" href="/docs">API ↗</a>
     </div>
