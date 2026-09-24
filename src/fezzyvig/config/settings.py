@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     database_url: str = "postgresql+psycopg://fezzyvig:fezzyvig@localhost:5432/fezzyvig"
     log_level: str = "INFO"
     http_timeout: float = Field(default=10.0, gt=0)
-    hh_user_agent: str = "Fezzyvig/0.1"
+    hh_user_agent: str = "Fezzyvig/0.1 you@sample.com"
     hh_client_id: str | None = None
     hh_client_secret: SecretStr | None = None
     hh_redirect_uri: str | None = None
