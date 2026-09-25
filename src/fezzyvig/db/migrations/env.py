@@ -4,7 +4,13 @@ from alembic import context
 from sqlalchemy import engine_from_config, pool
 
 from fezzyvig.config.settings import get_settings
-from fezzyvig.models import EmployerOAuthToken, EmployerVacancy, User, UserSession  # noqa: F401
+from fezzyvig.models import (  # noqa: F401
+    EmployerOAuthToken,
+    EmployerVacancy,
+    SyncJob,
+    User,
+    UserSession,
+)
 from fezzyvig.models.base import Base
 
 config = context.config

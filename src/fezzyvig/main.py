@@ -81,6 +81,12 @@ def login_page() -> FileResponse:
     return FileResponse(static_directory / "index.html")
 
 
+@app.get("/vacancies/{vacancy_id}", include_in_schema=False)
+def vacancy_page(vacancy_id: int) -> FileResponse:
+    """Вернуть страницу карточки вакансии для клиентского интерфейса."""
+    return FileResponse(static_directory / "index.html")
+
+
 @app.get("/health", tags=["system"])
 def health() -> dict[str, str]:
     """Вернуть базовый индикатор работоспособности приложения."""

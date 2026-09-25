@@ -13,9 +13,10 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     database_url: str = "postgresql+psycopg://fezzyvig:fezzyvig@localhost:5432/fezzyvig"
+    celery_broker_url: str = "redis://localhost:6379/0"
     log_level: str = "INFO"
     http_timeout: float = Field(default=10.0, gt=0)
-    hh_user_agent: str = "Fezzyvig/0.1"
+    hh_user_agent: str = "Fezzyvig/0.1 you@sample.com"
     hh_client_id: str | None = None
     hh_client_secret: SecretStr | None = None
     hh_redirect_uri: str | None = None

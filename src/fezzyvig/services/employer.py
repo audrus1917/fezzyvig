@@ -176,7 +176,13 @@ class EmployerService:
             record.title = str(item.get("name", record.title))
             record.company = str((item.get("employer") or {}).get("name", record.company))
             record.url = str(item.get("alternate_url", record.url))
-            record.raw_payload = cast(dict[str, object], item)
+            record.area_name = self._nested_name(item, "area")
+            record.employment_form_name = self._nested_name(item, "employment_form")
+            record.vacancy_type_name = self._nested_name(item, "type")
+            record.created_at = self._parse_hh_date(item.get("created_at"))
+            record.published_at = self._parse_hh_date(item.get("published_at"))
+            record.expires_at = self._parse_hh_date(item.get("expires_at"))
+            record.data = cast(dict[str, object], item)
             record.synced_at = datetime.now(UTC)
             self._repository.save_vacancy(record)
             synced += 1
@@ -186,6 +192,22 @@ class EmployerService:
     def list_vacancies(self) -> list[EmployerVacancy]:
         """Вернуть вакансии по убыванию времени последней синхронизации."""
         return self._repository.list_vacancies()
+
+    @staticmethod
+    def _nested_name(item: dict[str, object], key: str) -> str | None:
+        value = item.get(key)
+        if not isinstance(value, dict):
+            return None
+        name = value.get("name")
+        return name if isinstance(name, str) else None
+
+    @staticmethod
+    def _parse_hh_date(value: object) -> datetime | None:
+        if value is None:
+            return None
+        if not isinstance(value, str):
+            raise ValueError("HH vacancy date must be a string")
+        return datetime.fromisoformat(value)
 
     @staticmethod
     def _parse_tokens(response: httpx.Response) -> tuple[str, str, int]:
