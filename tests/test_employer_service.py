@@ -75,6 +75,54 @@ def test_sync_vacancies_upserts() -> None:
         asyncio.run(client.aclose())
 
 
+def test_sync_preserves_hh_vacancy() -> None:
+    """Синхронизация сохраняет ответ HH и все даты из списка вакансий."""
+    payload = {
+        "items": [
+            {
+                "id": "123",
+                "name": "Python Developer",
+                "employer": {"name": "Acme", "trusted": True},
+                "alternate_url": "https://hh.ru/vacancy/123",
+                "area": {"id": "1", "name": "Москва"},
+                "employment_form": {"id": "FULL", "name": "Полная занятость"},
+                "type": {"id": "open", "name": "Открытая"},
+                "created_at": "2026-08-28T09:05:47+0300",
+                "published_at": "2026-08-29T09:05:47+0300",
+                "expires_at": "2026-09-28T09:05:47+0300",
+                "counters": {"views": 42},
+            }
+        ]
+    }
+    items = payload["items"]
+    client = httpx.AsyncClient(
+        base_url="https://api.hh.ru",
+        transport=httpx.MockTransport(lambda request: httpx.Response(200, json=payload)),
+    )
+    engine = create_engine("sqlite://")
+    Base.metadata.create_all(engine)
+    try:
+        with Session(engine) as session:
+            service = EmployerService(session, client, user_id=1)
+            assert asyncio.run(service.sync_vacancies("/employer/vacancies")) == len(items)
+
+            records = {record.external_id: record for record in service.list_vacancies()}
+            for item in items:
+                record = records[str(item["id"])]
+                assert record.data == item
+                assert record.area_name == item["area"]["name"]
+                assert record.employment_form_name == item["employment_form"]["name"]
+                assert record.vacancy_type_name == item["type"]["name"]
+                for field in ("created_at", "published_at", "expires_at"):
+                    actual = getattr(record, field)
+                    assert actual is not None
+                    assert actual.replace(tzinfo=None) == datetime.fromisoformat(
+                        item[field]
+                    ).replace(tzinfo=None)
+    finally:
+        asyncio.run(client.aclose())
+
+
 def test_pkce_values_are_unique() -> None:
     """Каждая попытка OAuth получает уникальные состояние и верификатор."""
     first = EmployerService.create_pkce()

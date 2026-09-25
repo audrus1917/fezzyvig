@@ -10,6 +10,7 @@ from sqlalchemy.pool import StaticPool
 from fezzyvig.db.database import get_session
 from fezzyvig.main import app
 from fezzyvig.models.base import Base
+from fezzyvig.models.vacancy import EmployerVacancy
 
 
 def test_authentication_flow() -> None:
@@ -61,6 +62,21 @@ def test_authentication_flow() -> None:
             assert invalid_login.json()["detail"] == "Неверный адрес электронной почты или пароль"
             assert client.get("/auth/me").json()["first_name"] == "Anna"
             assert client.get("/employer/vacancies").json() == []
+            with Session(engine) as session:
+                session.add(
+                    EmployerVacancy(
+                        user_id=registered.json()["id"],
+                        external_id="42",
+                        title="Developer",
+                        company="Acme",
+                        url="https://hh.ru/vacancy/42",
+                        description="Python",
+                        data={"id": "42", "employer": {"trusted": True}},
+                    )
+                )
+                session.commit()
+            vacancy = client.get("/employer/vacancies").json()[0]
+            assert vacancy["data"] == {"id": "42", "employer": {"trusted": True}}
 
             assert client.post("/auth/logout").status_code == 204
             assert client.get("/auth/me").status_code == 401

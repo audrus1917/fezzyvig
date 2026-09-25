@@ -36,9 +36,15 @@ class EmployerVacancyResponse(BaseModel):
     external_id: str
     title: str
     company: str
+    area_name: str | None
+    employment_form_name: str | None
+    vacancy_type_name: str | None
     url: str
     description: str
+    data: dict[str, object]
+    created_at: datetime | None
     published_at: datetime | None
+    expires_at: datetime | None
     synced_at: datetime
 
 
