@@ -50,3 +50,9 @@ msgstr "Не удалось обновить токен OAuth HeadHunter"
 
 msgid "HH employer account connected"
 msgstr "Аккаунт работодателя HeadHunter подключён"
+
+msgid "Unable to queue employer sync"
+msgstr "Не удалось поставить синхронизацию вакансий в очередь"
+
+msgid "Sync task not found"
+msgstr "Задача синхронизации не найдена"

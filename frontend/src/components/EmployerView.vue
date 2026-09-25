@@ -1,22 +1,26 @@
 <script setup lang="ts">
-import { onMounted, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 
 import { api } from "../api";
 import { branding } from "../branding";
-import type { EmployerSyncResult, EmployerVacancy } from "../types";
-import EmptyState from "./EmptyState.vue";
+import type { EmployerVacancy } from "../types";
 import StatusMessage from "./StatusMessage.vue";
+import VacancyCard from "./VacancyCard.vue";
 
 const vacancies = ref<EmployerVacancy[]>([]);
+const titleFilter = ref("");
+const filteredVacancies = computed(() => {
+  const query = titleFilter.value.trim().toLocaleLowerCase("ru-RU");
+  return query
+    ? vacancies.value.filter((vacancy) => vacancy.title.toLocaleLowerCase("ru-RU").includes(query))
+    : vacancies.value;
+});
 const loading = ref(false);
-const syncing = ref(false);
 const statusMessage = ref("");
-const statusError = ref(false);
-
-function descriptionPreview(description: string): string {
-  const normalized = description.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
-  return normalized.length > 220 ? `${normalized.slice(0, 217)}…` : normalized;
-}
+const vacancyId = /^\/vacancies\/(\d+)\/?$/.exec(window.location.pathname)?.[1];
+const selectedVacancy = computed(() =>
+  vacancies.value.find((vacancy) => String(vacancy.id) === vacancyId),
+);
 
 function formatDate(value: string | null): string {
   if (!value) return branding.dateMissing;
@@ -25,83 +29,103 @@ function formatDate(value: string | null): string {
 
 async function load(): Promise<void> {
   loading.value = true;
-  statusError.value = false;
+  statusMessage.value = "";
   try {
     vacancies.value = await api<EmployerVacancy[]>("/employer/vacancies");
   } catch (error) {
-    statusError.value = true;
     statusMessage.value = error instanceof Error ? error.message : branding.vacanciesError;
   } finally {
     loading.value = false;
   }
 }
 
-async function sync(): Promise<void> {
-  syncing.value = true;
-  statusError.value = false;
-  statusMessage.value = branding.syncingMessage;
-  try {
-    const result = await api<EmployerSyncResult>("/employer/sync", { method: "POST" });
-    statusMessage.value = `${branding.syncedMessage}: ${result.synced}`;
-    await load();
-  } catch (error) {
-    statusError.value = true;
-    statusMessage.value = error instanceof Error ? error.message : branding.syncError;
-  } finally {
-    syncing.value = false;
-  }
-}
-
-function connectHH(): void {
-  window.open("/employer/oauth/authorize", "fezzyvig-hh-oauth", "popup,width=720,height=760");
-}
-
 onMounted(load);
+defineExpose({ load });
 </script>
 
 <template>
-  <div class="page-heading">
-    <p class="eyebrow">{{ branding.workspaceTitle }}</p>
-    <h1>{{ branding.vacanciesTitle }}</h1>
-  </div>
+  <template v-if="vacancyId">
+    <a class="back-link" href="/">{{ branding.backToVacancies }}</a>
+    <div v-if="loading" class="loading-panel">{{ branding.vacanciesLoading }}</div>
+    <StatusMessage v-else-if="statusMessage" :message="statusMessage" error />
+    <VacancyCard v-else-if="selectedVacancy" :vacancy="selectedVacancy" />
+    <p v-else>{{ branding.vacancyNotFound }}</p>
+  </template>
+  <template v-else>
+  <StatusMessage v-if="statusMessage" class="workspace-status" :message="statusMessage" error />
 
-  <section id="connection" class="connect-card">
-    <h2>{{ branding.connectionTitle }}</h2>
-    <p>{{ branding.connectionDescription }}</p>
-    <div class="connect-actions">
-      <button class="secondary-button" type="button" @click="connectHH">{{ branding.connectButton }}</button>
-      <button class="primary-button" type="button" :disabled="syncing" @click="sync">
-        {{ syncing ? branding.syncing : branding.syncButton }}
-      </button>
-    </div>
-    <StatusMessage :message="statusMessage" :error="statusError" />
-  </section>
-
-  <section id="vacancies" class="workspace">
-    <div class="section-heading">
+  <section id="vacancies" class="workspace" :aria-label="branding.vacanciesTitle">
+    <div class="panel-heading">
       <div>
-        <h2>{{ branding.vacanciesTitle }}</h2>
+        <h1>{{ branding.vacanciesTitle }}</h1>
+        <p>{{ branding.vacanciesSubtitle }}</p>
       </div>
-      <span class="count-badge">{{ vacancies.length }}</span>
+      <span class="panel-count">{{ branding.totalLabel }}: {{ filteredVacancies.length }}</span>
     </div>
+    <details class="vacancy-filters">
+      <summary>
+        {{ branding.filtersTitle }}
+        <span v-if="titleFilter.trim()" class="filter-current">{{ titleFilter.trim() }}</span>
+      </summary>
+      <div class="filter-fields">
+        <label for="vacancy-title-filter">{{ branding.titleFilterLabel }}</label>
+        <input
+          id="vacancy-title-filter"
+          v-model="titleFilter"
+          type="search"
+          :placeholder="branding.titleFilterPlaceholder"
+        />
+        <button
+          class="filter-reset"
+          type="button"
+          :disabled="!titleFilter"
+          @click="titleFilter = ''"
+        >
+          {{ branding.resetFilters }}
+        </button>
+      </div>
+    </details>
 
     <div v-if="loading && !vacancies.length" class="loading-panel">{{ branding.vacanciesLoading }}</div>
-    <div v-else-if="vacancies.length" class="card-grid">
-      <article v-for="vacancy in vacancies" :key="vacancy.id" class="vacancy-card">
-        <p class="company">{{ vacancy.company }}</p>
-        <h3>{{ vacancy.title }}</h3>
-        <div class="meta">
-          <span class="tag">{{ branding.publishedAt }} {{ formatDate(vacancy.published_at) }}</span>
-          <span class="tag good">{{ branding.syncedAt }} {{ formatDate(vacancy.synced_at) }}</span>
-        </div>
-        <p class="summary">{{ descriptionPreview(vacancy.description) || branding.descriptionMissing }}</p>
-        <a :href="vacancy.url" target="_blank" rel="noopener noreferrer">{{ branding.openVacancy }}</a>
-      </article>
+    <div v-else class="vacancies-table-wrap">
+      <table class="vacancies-table">
+        <thead>
+          <tr>
+            <th scope="col">{{ branding.externalId }}</th>
+            <th scope="col">{{ branding.vacancyName }}</th>
+            <th scope="col">{{ branding.companyName }}</th>
+            <th scope="col">{{ branding.publishedAt }}</th>
+            <th scope="col">{{ branding.syncedAt }}</th>
+            <th scope="col">{{ branding.hhLinkColumn }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="vacancy in filteredVacancies" :key="vacancy.id">
+            <td class="vacancy-id">{{ vacancy.external_id }}</td>
+            <td class="vacancy-title"><a :href="`/vacancies/${vacancy.id}`">{{ vacancy.title }}</a></td>
+            <td>{{ vacancy.company || "—" }}</td>
+            <td>{{ formatDate(vacancy.published_at) }}</td>
+            <td>{{ formatDate(vacancy.synced_at) }}</td>
+            <td>
+              <a
+                :href="vacancy.url"
+                :aria-label="`${branding.openVacancyLabel}: ${vacancy.title}`"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {{ branding.openVacancy }}
+              </a>
+            </td>
+          </tr>
+          <tr v-if="!filteredVacancies.length">
+            <td colspan="6" class="vacancies-empty">
+              <strong>{{ titleFilter.trim() ? branding.filterEmpty : branding.vacanciesEmptyTitle }}</strong>
+              <span v-if="!titleFilter.trim()">{{ branding.vacanciesEmptyDescription }}</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
-    <EmptyState
-      v-else
-      :title="branding.vacanciesEmptyTitle"
-      :description="branding.vacanciesEmptyDescription"
-    />
   </section>
+  </template>
 </template>

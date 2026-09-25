@@ -24,3 +24,12 @@ def test_login_page() -> None:
 
     assert response.status_code == 200
     assert "<div id=\"app\"></div>" in response.text
+
+
+def test_vacancy_page() -> None:
+    """Прямая ссылка на карточку возвращает frontend."""
+    with TestClient(app) as client:
+        response = client.get("/vacancies/42")
+
+    assert response.status_code == 200
+    assert "<div id=\"app\"></div>" in response.text

@@ -31,6 +31,10 @@ docker compose exec api fezzyvig-add-user user@example.com --first-name Иван
 production-развёртыванием нужны шифрование токенов в хранилище, идентификация
 работодателя и аудит действий.
 
+Синхронизация вакансий выполняется воркером Celery через Redis. `POST /employer/sync`
+возвращает `202` и `task_id`; состояние и количество синхронизированных вакансий
+доступны по `GET /employer/sync/{task_id}` только владельцу задачи.
+
 ## Локальная разработка
 
 Слои backend: `api` принимает HTTP-запросы и возвращает схемы Pydantic,
@@ -49,10 +53,18 @@ uvicorn fezzyvig.main:app --reload
 
 ```dotenv
 DATABASE_URL=postgresql+psycopg://fezzyvig:fezzyvig@localhost:5432/fezzyvig
+CELERY_BROKER_URL=redis://localhost:6379/0
 ```
 
 Alembic применяет только ещё не установленные миграции. После обновления приложения
 команду `alembic upgrade head` следует выполнить перед запуском.
+
+Для локальной фоновой синхронизации запустите Redis и воркер в отдельных терминалах:
+
+```bash
+docker compose up -d redis
+celery -A fezzyvig.tasks:celery_app worker --loglevel=info
+```
 
 Форма регистрации пока скрыта. Локально пользователя можно создать командой
 `fezzyvig-add-user user@example.com --first-name Иван --last-name Иванов`.
