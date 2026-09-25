@@ -38,5 +38,5 @@ class UserSession(ChangedAtMixin, Base):
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
 
     def __repr__(self) -> str:
-        return f"UserSession(user_id={self.ser_id})"
+        return f"UserSession(user_id={self.user_id})"
 
